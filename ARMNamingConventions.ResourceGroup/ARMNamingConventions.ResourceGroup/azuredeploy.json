@@ -1,0 +1,203 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "templateStoreBaseUri": {
+      "type": "string"
+    },
+    "templateStoreSasToken": {
+      "type": "securestring"
+    },
+    "clientName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the client e.g. Adatis."
+      }
+    },
+    "projectAbbreviation": {
+      "type": "string",
+      "metadata": {
+        "description": "The abbreviation for the project e.g. InternalBI"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "The environment the resources are being deployed to."
+      }
+    }
+  },
+  "variables": {
+    "functionAppTemplateUri": "[concat(parameters('templateStoreBaseUri'), 'resources/functionApp.json', parameters('templateStoreSasToken'))]",
+    "keyVaultTemplateUri": "[concat(parameters('templateStoreBaseUri'), 'resources/keyVault.json', parameters('templateStoreSasToken'))]",
+    "namingConventionsTemplateUri": "[concat(parameters('templateStoreBaseUri'), 'conventions/namingConventions.json', parameters('templateStoreSasToken'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-10",
+      "name": "functionAppName",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('namingConventionsTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clientName": {
+            "value": "[parameters('clientName')]"
+          },
+          "projectAbbreviation": {
+            "value": "[parameters('projectAbbreviation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "resourceType": {
+            "value": "functionApp"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "storageAccountName",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('namingConventionsTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clientName": {
+            "value": "[parameters('clientName')]"
+          },
+          "projectAbbreviation": {
+            "value": "[parameters('projectAbbreviation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "resourceType": {
+            "value": "storageAccount"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "functionApp",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('functionAppTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "functionAppName": {
+            "value": "[reference('functionAppName').outputs.resourceName.value]"
+          },
+          "storageAccountName": {
+            "value": "[reference('storageAccountName').outputs.resourceName.value]"
+          },
+          "clientName": {
+            "value": "[parameters('clientName')]"
+          },
+          "projectAbbreviation": {
+            "value": "[parameters('projectAbbreviation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "keyVaultName",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('namingConventionsTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clientName": {
+            "value": "[parameters('clientName')]"
+          },
+          "projectAbbreviation": {
+            "value": "[parameters('projectAbbreviation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "resourceType": {
+            "value": "keyVault"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "keyVault",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('keyVaultTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "keyVaultName": {
+            "value": "[reference('keyVaultName').outputs.resourceName.value]"
+          },
+          "clientName": {
+            "value": "[parameters('clientName')]"
+          },
+          "projectAbbreviation": {
+            "value": "[parameters('projectAbbreviation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "accessPolicies": {
+            "value": [
+              {
+                "tenantId": "[subscription().tenantId]",
+                "objectId": "[reference('functionApp').outputs.principalId.value]",
+                "permissions": {
+                  "keys": [],
+                  "secrets": [
+                    "get"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[reference('functionAppName').outputs.resourceName.value]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[reference('keyVaultName').outputs.resourceName.value]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    }
+  }
+}

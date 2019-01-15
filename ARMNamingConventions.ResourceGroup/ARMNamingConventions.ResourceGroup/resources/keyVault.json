@@ -1,0 +1,67 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the key vault to be provisioned."
+      }
+    },
+    "accessPolicies": {
+      "type": "array",
+      "metadata": {
+        "description": "The access policies to create."
+      }
+    },
+    "clientName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the client e.g. Adatis."
+      }
+    },
+    "projectAbbreviation": {
+      "type": "string",
+      "metadata": {
+        "description": "The abbreviation for the project e.g. InternalBI"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "The environment the resources are being deployed to."
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2018-02-14",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "client": "[parameters('clientName')]",
+        "project": "[parameters('projectAbbreviation')]",
+        "environment": "[parameters('environment')]"
+      },
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": true,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": "[parameters('accessPolicies')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

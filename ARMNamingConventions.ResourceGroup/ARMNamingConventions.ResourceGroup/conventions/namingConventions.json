@@ -1,0 +1,63 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clientName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the client e.g. Adatis."
+      }
+    },
+    "projectAbbreviation": {
+      "type": "string",
+      "metadata": {
+        "description": "The abbreviation for the project e.g. InternalBI"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [ "dev", "test", "prod" ],
+      "metadata": {
+        "description": "The environment the resources are being deployed to."
+      }
+    },
+    "resourceType": {
+      "type": "string",
+      "allowedValues": [
+        "sqlServer",
+        "functionApp",
+        "adf",
+        "storageAccount",
+        "keyVault"
+      ],
+      "metadata": {
+        "description": "The type of resource being deployed."
+      }
+    },
+    "instanceNumber": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The instance number of the resource that will be suffixed on the resource name."
+      }
+    }
+  },
+  "variables": {
+    "sqlServerAbbreviation": "SQLSERVER",
+    "adfAbbreviation": "ADF",
+    "storageAccountAbbreviation": "SA",
+    "functionAppAbbreviation": "AF",
+    "keyVaultAbbreviation": "KV",
+
+    "regionAbbreviation": "[replace(replace(replace(replace(resourceGroup().location,'northeurope','neu'), 'westeurope', 'weu'), 'uksouth', 'uks'), 'ukwest', 'ukw')]"
+  },
+  "resources": [
+
+  ],
+  "outputs": {
+    "resourceName": {
+      "type": "string",
+      "value": "[concat(toLower(parameters('clientName')), toLower(parameters('projectAbbreviation')), toLower(variables(concat(parameters('resourceType'), 'Abbreviation'))), toLower(variables('regionAbbreviation')), toLower(parameters('environment')), padLeft(string(parameters('instanceNumber')), 2, '0'))]"
+    }
+  }
+}
